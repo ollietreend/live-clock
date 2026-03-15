@@ -43,6 +43,10 @@ self.addEventListener('fetch', function (event) {
   // Only handle same-origin GET requests
   if (event.request.method !== 'GET') return;
 
+  // Never intercept the service worker itself — the browser must always
+  // fetch it fresh from the network to detect updates
+  if (event.request.url.includes('service-worker.js')) return;
+
   event.respondWith(
     caches.match(event.request).then(function (cached) {
       if (cached) return cached;
