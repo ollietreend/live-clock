@@ -98,8 +98,7 @@
         textNodes[2].nodeValue = pad(now.getSeconds());
 
         // Schedule next tick at the exact moment the next second rolls over
-        const now = Date.now();
-        const delay = 1000 - (now % 1000);
+        const delay = 1000 - (now.getTime() % 1000);
         tickTimeout = setTimeout(tick, delay);
       }
 
