@@ -6,14 +6,14 @@
   <title>Clock</title>
 
   <!-- PWA -->
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#000000">
 
   <!-- Apple PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Clock">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
 
   <style>
     *, *::before, *::after {
@@ -206,7 +206,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('/service-worker.js').catch(function () {});
+          navigator.serviceWorker.register('service-worker.js').catch(function () {});
         });
       }
 

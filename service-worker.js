@@ -1,11 +1,11 @@
 const CACHE_NAME = 'live-clock-v1';
 
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 // ── Install: precache all assets ─────────────────────────────────────────────
