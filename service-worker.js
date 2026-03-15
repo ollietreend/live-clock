@@ -1,10 +1,10 @@
-const CACHE_NAME = 'live-clock-v2';
+const CACHE_NAME = 'live-clock-v3';
 
 const PRECACHE_URLS = [
   './',
   './index.html',
   './manifest.json',
-  './fonts/Sora-Bold.woff2',
+  './fonts/Figtree-Bold.woff2',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
