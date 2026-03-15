@@ -1,6 +1,7 @@
-const CACHE_NAME = 'live-clock-v6';
+const CACHE_NAME = 'live-clock-v7';
 
 const PRECACHE_URLS = [
+  './',
   './index.html',
   './manifest.json',
   './fonts/Figtree-Bold.woff2',
@@ -36,58 +37,30 @@ self.addEventListener('activate', function (event) {
   );
 });
 
-// ── Fetch strategy ────────────────────────────────────────────────────────────
-//
-// HTML (index.html / navigate requests): network-first, fall back to cache.
-//   Always fetching HTML fresh ensures the browser picks up a new service
-//   worker registration on every page load, without needing to clear cache.
-//
-// Everything else (fonts, icons, manifest): cache-first.
-//   These assets are versioned by the cache name and don't change between
-//   deploys, so serving from cache is safe and fast.
+// ── Fetch: cache-first strategy ──────────────────────────────────────────────
 
 self.addEventListener('fetch', function (event) {
   // Only handle same-origin GET requests
   if (event.request.method !== 'GET') return;
 
-  // Never intercept the service worker itself
+  // Never intercept the service worker itself — the browser must always
+  // fetch it fresh from the network to detect updates
   if (event.request.url.includes('service-worker.js')) return;
 
-  const isHTML = event.request.mode === 'navigate' ||
-    event.request.destination === 'document';
+  event.respondWith(
+    caches.match(event.request).then(function (cached) {
+      if (cached) return cached;
 
-  if (isHTML) {
-    // Network-first for HTML
-    event.respondWith(
-      fetch(event.request).then(function (response) {
-        if (response && response.status === 200) {
+      return fetch(event.request).then(function (response) {
+        // Cache successful responses for same-origin requests
+        if (response && response.status === 200 && response.type === 'basic') {
           const cloned = response.clone();
           caches.open(CACHE_NAME).then(function (cache) {
             cache.put(event.request, cloned);
           });
         }
         return response;
-      }).catch(function () {
-        // Offline fallback
-        return caches.match('./index.html');
-      })
-    );
-  } else {
-    // Cache-first for all other assets
-    event.respondWith(
-      caches.match(event.request).then(function (cached) {
-        if (cached) return cached;
-
-        return fetch(event.request).then(function (response) {
-          if (response && response.status === 200 && response.type === 'basic') {
-            const cloned = response.clone();
-            caches.open(CACHE_NAME).then(function (cache) {
-              cache.put(event.request, cloned);
-            });
-          }
-          return response;
-        });
-      })
-    );
-  }
+      });
+    })
+  );
 });
