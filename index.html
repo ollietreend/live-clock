@@ -62,10 +62,15 @@
       line-height: 1;
       /* font-size is set dynamically via JS */
     }
+
+    #clock .sep {
+      display: inline-block;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
-  <div id="clock" role="timer" aria-label="Current time" aria-live="off">00:00:00</div>
+  <div id="clock" role="timer" aria-label="Current time" aria-live="off">00<span class="sep">:</span>00<span class="sep">:</span>00</div>
 
   <script>
     (function () {
@@ -81,15 +86,16 @@
         return String(n).padStart(2, '0');
       }
 
-      function getTimeString() {
-        const now = new Date();
-        return pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
-      }
-
-      // ── Clock tick (drift-corrected) ───────────────────────────────────────
+      // Text nodes: [0]=HH, [1]=sep, [2]=MM, [3]=sep, [4]=SS
+      const textNodes = Array.from(clock.childNodes).filter(function (n) {
+        return n.nodeType === Node.TEXT_NODE;
+      });
 
       function tick() {
-        clock.textContent = getTimeString();
+        const now = new Date();
+        textNodes[0].nodeValue = pad(now.getHours());
+        textNodes[1].nodeValue = pad(now.getMinutes());
+        textNodes[2].nodeValue = pad(now.getSeconds());
 
         // Schedule next tick at the exact moment the next second rolls over
         const now = Date.now();
