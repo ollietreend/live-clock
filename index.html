@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Clock</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000000">
+
+  <!-- Apple PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Clock">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      color: #fff;
+    }
+
+    body {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    #clock {
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      font-weight: 300;
+      line-height: 1;
+      /* font-size is set dynamically via JS */
+    }
+  </style>
+</head>
+<body>
+  <div id="clock" role="timer" aria-label="Current time" aria-live="off">00:00:00</div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const clock = document.getElementById('clock');
+      let wakeLock = null;
+      let tickTimeout = null;
+
+      // ── Helpers ────────────────────────────────────────────────────────────
+
+      function pad(n) {
+        return String(n).padStart(2, '0');
+      }
+
+      function getTimeString() {
+        const now = new Date();
+        return pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+      }
+
+      // ── Clock tick (drift-corrected) ───────────────────────────────────────
+
+      function tick() {
+        clock.textContent = getTimeString();
+
+        // Schedule next tick at the exact moment the next second rolls over
+        const now = Date.now();
+        const delay = 1000 - (now % 1000);
+        tickTimeout = setTimeout(tick, delay);
+      }
+
+      // ── Font scaling ───────────────────────────────────────────────────────
+      // Compares viewport dimensions to text dimensions and finds the largest
+      // font size that keeps the text within bounds on a single line.
+
+      function scaleFont() {
+        // Reset to a known baseline so measurements are meaningful
+        clock.style.fontSize = '100px';
+
+        const containerW = document.body.clientWidth;
+        const containerH = document.body.clientHeight;
+        const textW = clock.scrollWidth;
+        const textH = clock.scrollHeight;
+
+        const scaleW = containerW / textW;
+        const scaleH = containerH / textH;
+        const scale = Math.min(scaleW, scaleH);
+
+        // Apply a small safety margin (98%) to avoid edge-case overflow
+        clock.style.fontSize = Math.floor(100 * scale * 0.98) + 'px';
+      }
+
+      // ── Resize / orientation handling (debounced) ──────────────────────────
+
+      let resizeTimer = null;
+
+      function onResize() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(scaleFont, 150);
+      }
+
+      window.addEventListener('resize', onResize);
+
+      // orientationchange fires before the layout has settled; wait a beat
+      window.addEventListener('orientationchange', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(scaleFont, 300);
+      });
+
+      // ── Wake Lock ──────────────────────────────────────────────────────────
+
+      async function acquireWakeLock() {
+        if (!('wakeLock' in navigator)) return;
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', function () {
+            wakeLock = null;
+          });
+        } catch (err) {
+          // Wake Lock request denied or not supported – silently ignore
+        }
+      }
+
+      function releaseWakeLock() {
+        if (wakeLock) {
+          wakeLock.release().catch(function () {});
+          wakeLock = null;
+        }
+      }
+
+      function isFullscreen() {
+        return !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement
+        );
+      }
+
+      // Re-acquire Wake Lock when the tab becomes visible again (OS releases
+      // it automatically when the page is backgrounded).
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible' && isFullscreen()) {
+          acquireWakeLock();
+        }
+      });
+
+      // Release Wake Lock when fullscreen exits
+      function onFullscreenChange() {
+        if (!isFullscreen()) {
+          releaseWakeLock();
+        }
+      }
+
+      document.addEventListener('fullscreenchange', onFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+      document.addEventListener('mozfullscreenchange', onFullscreenChange);
+      document.addEventListener('MSFullscreenChange', onFullscreenChange);
+
+      // ── Tap-to-fullscreen ──────────────────────────────────────────────────
+
+      document.body.addEventListener('click', async function () {
+        try {
+          if (isFullscreen()) {
+            if (document.exitFullscreen) {
+              await document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+              document.webkitExitFullscreen();
+            }
+          } else {
+            const el = document.documentElement;
+            if (el.requestFullscreen) {
+              await el.requestFullscreen();
+            } else if (el.webkitRequestFullscreen) {
+              el.webkitRequestFullscreen();
+            }
+            await acquireWakeLock();
+          }
+        } catch (err) {
+          // Fullscreen not supported or denied – silently continue
+        }
+      });
+
+      // ── Service Worker registration ────────────────────────────────────────
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/service-worker.js').catch(function () {});
+        });
+      }
+
+      // ── Init ───────────────────────────────────────────────────────────────
+
+      scaleFont();
+      tick();
+    })();
+  </script>
+</body>
+</html>
