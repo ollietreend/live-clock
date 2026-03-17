@@ -204,10 +204,29 @@
         }
       });
 
-      // Release Wake Lock when fullscreen exits
+      // ── Orientation lock ───────────────────────────────────────────────────
+
+      async function lockOrientation() {
+        if (!screen.orientation || !screen.orientation.lock) return;
+        try {
+          await screen.orientation.lock('landscape');
+        } catch (err) {
+          // Not supported or denied (e.g. iOS) – silently ignore
+        }
+      }
+
+      function unlockOrientation() {
+        if (!screen.orientation || !screen.orientation.unlock) return;
+        try {
+          screen.orientation.unlock();
+        } catch (err) {}
+      }
+
+      // Release Wake Lock and unlock orientation when fullscreen exits
       function onFullscreenChange() {
         if (!isFullscreen()) {
           releaseWakeLock();
+          unlockOrientation();
         }
       }
 
@@ -234,6 +253,7 @@
               el.webkitRequestFullscreen();
             }
             await acquireWakeLock();
+            await lockOrientation();
           }
         } catch (err) {
           // Fullscreen not supported or denied – silently continue

@@ -4,7 +4,6 @@
   "description": "Minimalist full-screen live clock",
   "start_url": "./",
   "display": "fullscreen",
-  "orientation": "any",
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [
