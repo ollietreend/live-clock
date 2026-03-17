@@ -67,6 +67,16 @@
       bottom: 0.1075em; /* Bebas Neue: colon centre is 24.35% of em vs digit centre at 35% */
     }
 
+    @keyframes sep-flash {
+      0%   { opacity: 1; }
+      50%  { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    #clock .sep.pulse {
+      animation: sep-flash 1s step-end forwards;
+    }
+
 
   </style>
 </head>
@@ -92,11 +102,24 @@
         return n.nodeType === Node.TEXT_NODE;
       });
 
+      const seps = Array.from(clock.querySelectorAll('.sep'));
+
+      function pulseSeps() {
+        seps.forEach(function (sep) {
+          sep.classList.remove('pulse');
+          // Force reflow so removing+re-adding the class restarts the animation
+          void sep.offsetWidth;
+          sep.classList.add('pulse');
+        });
+      }
+
       function tick() {
         const now = new Date();
         textNodes[0].nodeValue = pad(now.getHours());
         textNodes[1].nodeValue = pad(now.getMinutes());
         textNodes[2].nodeValue = pad(now.getSeconds());
+
+        pulseSeps();
 
         // Schedule next tick at the exact moment the next second rolls over
         const delay = 1000 - (now.getTime() % 1000);
