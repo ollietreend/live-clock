@@ -17,11 +17,11 @@
 
   <style>
     @font-face {
-      font-family: 'Figtree';
-      src: url('fonts/Figtree-Bold.woff2') format('woff2');
-      font-weight: 700;
+      font-family: 'Bebas Neue';
+      src: url('fonts/BebasNeue-Regular-subset.woff2') format('woff2');
+      font-weight: 400;
       font-style: normal;
-      font-display: swap;
+      font-display: block;
     }
 
     *, *::before, *::after {
@@ -47,7 +47,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Figtree', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Bebas Neue', -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
       user-select: none;
@@ -58,15 +58,11 @@
     #clock {
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
-      font-weight: 700;
       line-height: 1;
       /* font-size is set dynamically via JS */
     }
 
-    #clock .sep {
-      position: relative;
-      bottom: 0.1em;
-    }
+
   </style>
 </head>
 <body>
