@@ -270,8 +270,11 @@
 
       // ── Init ───────────────────────────────────────────────────────────────
 
-      scaleFont();
-      tick();
+      // Wait for fonts to load before measuring text dimensions for scaling
+      document.fonts.ready.then(function () {
+        scaleFont();
+        tick();
+      });
     })();
   </script>
 </body>
