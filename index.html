@@ -70,6 +70,11 @@
       bottom: 0.1075em; /* Bebas Neue: colon centre is 24.35% of em vs digit centre at 35% */
     }
 
+    :fullscreen body,
+    :-webkit-full-screen body {
+      cursor: none;
+    }
+
     @keyframes sep-flash {
       0%   { opacity: 1; }
       50%  { opacity: 0; }
@@ -239,23 +244,16 @@
       // ── Tap-to-fullscreen ──────────────────────────────────────────────────
 
       document.body.addEventListener('click', async function () {
+        if (isFullscreen()) return;
         try {
-          if (isFullscreen()) {
-            if (document.exitFullscreen) {
-              await document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-              document.webkitExitFullscreen();
-            }
-          } else {
-            const el = document.documentElement;
-            if (el.requestFullscreen) {
-              await el.requestFullscreen();
-            } else if (el.webkitRequestFullscreen) {
-              el.webkitRequestFullscreen();
-            }
-            await acquireWakeLock();
-            await lockOrientation();
+          const el = document.documentElement;
+          if (el.requestFullscreen) {
+            await el.requestFullscreen();
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
           }
+          await acquireWakeLock();
+          await lockOrientation();
         } catch (err) {
           // Fullscreen not supported or denied – silently continue
         }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'live-clock-v9';
+const CACHE_NAME = 'live-clock-v10';
 
 const PRECACHE_URLS = [
   './',
